@@ -1,14 +1,20 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>reactive_robot</name>
+  <name>reactive_turtlebot</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="y_ngu@todo.todo">y_ngu</maintainer>
+  <maintainer email="morris@todo.todo">morris</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclcpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>ros_gz_interfaces</depend>
+  
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
