@@ -78,7 +78,7 @@ private:
     static constexpr double FORWARD_SPEED = 0.2;
     static constexpr double TURN_SPEED = 0.6;
 
-    static constexpr double ESCAPE_ANGLE = M_PI;
+    static constexpr double ESCAPE_ANGLE = 175.0 * M_PI / 180.0;
     static constexpr double RANDOM_TURN_ANGLE =
         15.0 * M_PI / 180.0;
 
@@ -332,6 +332,14 @@ private:
 
             return;
         }
+	RCLCPP_INFO_THROTTLE(
+            this->get_logger(),
+            *this->get_clock(),
+            1000,
+            "LiDAR | LEFT: %.2f m | FRONT: %.2f m | RIGHT: %.2f m",
+            left_distance_,
+            front_distance_,
+            right_distance_);
 
         /*
          * Priority 2:
@@ -408,7 +416,9 @@ private:
          * Priority 4:
          * Avoid an asymmetric obstacle.
          */
-        else if (front_distance_ <= OBSTACLE_DISTANCE)
+        else if (front_distance_ <= OBSTACLE_DISTANCE ||
+                 left_distance_ <= OBSTACLE_DISTANCE ||
+                 right_distance_ <= OBSTACLE_DISTANCE)
         {
             command.twist.linear.x = 0.0;
 

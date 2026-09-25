@@ -29,4 +29,10 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(DIRECTORY
+  launch
+  worlds
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_package()
