@@ -179,12 +179,16 @@ private:
     void bumperCallback(
         const ros_gz_interfaces::msg::Contacts::SharedPtr msg)
     {
-        bumper_detected_ = !msg->contacts.empty();
-
-        if (bumper_detected_)
+        if (!msg->contacts.empty())
         {
-            RCLCPP_WARN(
+            bumper_detected_ = true;
+            last_bumper_contact_time_ =
+                this->get_clock()->now();
+
+            RCLCPP_WARN_THROTTLE(
                 this->get_logger(),
+                *this->get_clock(),
+                1000,
                 "Bumper collision detected");
         }
     }
@@ -304,9 +308,28 @@ private:
             this->get_clock()->now();
 
         /*
-         * Priority 1:
-         * Halt when a bumper collision is detected.
-         */
+        * Clear the bumper state when contact messages
+        * have stopped arriving.
+        */
+        if (bumper_detected_)
+        {
+            double time_since_contact =
+                (this->get_clock()->now() -
+                last_bumper_contact_time_).seconds();
+
+            if (time_since_contact > 0.5)
+            {
+                bumper_detected_ = false;
+
+                RCLCPP_INFO(
+                    this->get_logger(),
+                    "Bumper contact cleared");
+            }
+        }
+        /*
+        * Priority 1:
+        * Halt when a bumper collision is detected.
+        */
         if (bumper_detected_)
         {
             command.twist.linear.x = 0.0;
@@ -332,6 +355,7 @@ private:
 
             return;
         }
+
 	RCLCPP_INFO_THROTTLE(
             this->get_logger(),
             *this->get_clock(),
@@ -547,6 +571,8 @@ private:
 
     double random_turn_direction_ = 1.0;
 
+    rclcpp::Time last_bumper_contact_time_{0, 0, RCL_ROS_TIME};
+    
     bool position_initialized_ = false;
     bool bumper_detected_ = false;
     bool keyboard_active_ = false;
