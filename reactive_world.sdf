@@ -1,0 +1,157 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="room_and_hallway">
+
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact"/>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>30 30</size></plane></geometry>
+          <surface><friction><ode><mu>100</mu><mu2>50</mu2></ode></friction></surface>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>30 30</size></plane></geometry>
+          <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="building">
+      <static>true</static>
+
+    <link name="north_wall_link">
+      <pose>2.2860 6.0960 1.2500 0 0 0</pose>
+      <collision name="north_wall_collision">
+        <geometry><box><size>4.7220 0.1500 2.5000</size></box></geometry>
+      </collision>
+      <visual name="north_wall_visual">
+        <geometry><box><size>4.7220 0.1500 2.5000</size></box></geometry>
+        <material>
+          <ambient>0.8 0.8 0.8 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+    </link>
+
+    <link name="south_wall_link">
+      <pose>2.2860 0.0000 1.2500 0 0 0</pose>
+      <collision name="south_wall_collision">
+        <geometry><box><size>4.7220 0.1500 2.5000</size></box></geometry>
+      </collision>
+      <visual name="south_wall_visual">
+        <geometry><box><size>4.7220 0.1500 2.5000</size></box></geometry>
+        <material>
+          <ambient>0.8 0.8 0.8 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+    </link>
+
+    <link name="west_wall_link">
+      <pose>0.0000 3.0480 1.2500 0 0 0</pose>
+      <collision name="west_wall_collision">
+        <geometry><box><size>0.1500 6.2460 2.5000</size></box></geometry>
+      </collision>
+      <visual name="west_wall_visual">
+        <geometry><box><size>0.1500 6.2460 2.5000</size></box></geometry>
+        <material>
+          <ambient>0.8 0.8 0.8 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+    </link>
+
+    <link name="east_wall_link">
+      <pose>4.5720 3.0480 1.2500 0 0 0</pose>
+      <collision name="east_wall_collision">
+        <geometry><box><size>0.1500 6.2460 2.5000</size></box></geometry>
+      </collision>
+      <visual name="east_wall_visual">
+        <geometry><box><size>0.1500 6.2460 2.5000</size></box></geometry>
+        <material>
+          <ambient>0.8 0.8 0.8 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+    </link>
+
+    <link name="room_east_wall_link">
+      <pose>3.0480 3.8100 1.2500 0 0 0</pose>
+      <collision name="room_east_wall_collision">
+        <geometry><box><size>0.1500 4.7220 2.5000</size></box></geometry>
+      </collision>
+      <visual name="room_east_wall_visual">
+        <geometry><box><size>0.1500 4.7220 2.5000</size></box></geometry>
+        <material>
+          <ambient>0.8 0.8 0.8 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+    </link>
+
+    <link name="room_south_wall_west_link">
+      <pose>0.3435 1.5240 1.2500 0 0 0</pose>
+      <collision name="room_south_wall_west_collision">
+        <geometry><box><size>0.8370 0.1500 2.5000</size></box></geometry>
+      </collision>
+      <visual name="room_south_wall_west_visual">
+        <geometry><box><size>0.8370 0.1500 2.5000</size></box></geometry>
+        <material>
+          <ambient>0.8 0.8 0.8 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+    </link>
+
+    <link name="room_south_wall_east_link">
+      <pose>2.7045 1.5240 1.2500 0 0 0</pose>
+      <collision name="room_south_wall_east_collision">
+        <geometry><box><size>0.8370 0.1500 2.5000</size></box></geometry>
+      </collision>
+      <visual name="room_south_wall_east_visual">
+        <geometry><box><size>0.8370 0.1500 2.5000</size></box></geometry>
+        <material>
+          <ambient>0.8 0.8 0.8 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+    </link>
+    </model>
+
+  </world>
+</sdf>
