@@ -33,22 +33,21 @@
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows>
       <pose>0 0 10 0 0 0</pose>
-
       <diffuse>0.8 0.8 0.8 1</diffuse>
       <specular>0.2 0.2 0.2 1</specular>
-
       <direction>-0.5 0.1 -0.9</direction>
     </light>
 
-    <!-- Floor -->
+    <!-- Large floor -->
     <model name="floor">
       <static>true</static>
+      <pose>2.286 3.048 -0.05 0 0 0</pose>
 
       <link name="floor_link">
         <collision name="floor_collision">
           <geometry>
             <box>
-              <size>8 8 0.1</size>
+              <size>8 10 0.1</size>
             </box>
           </geometry>
         </collision>
@@ -56,7 +55,7 @@
         <visual name="floor_visual">
           <geometry>
             <box>
-              <size>8 8 0.1</size>
+              <size>8 10 0.1</size>
             </box>
           </geometry>
 
@@ -68,16 +67,16 @@
       </link>
     </model>
 
-    <!-- North wall -->
+    <!-- Top wall -->
     <model name="north_wall">
       <static>true</static>
-      <pose>0 4 1 0 0 0</pose>
+      <pose>2.286 6.096 1.25 0 0 0</pose>
 
       <link name="wall_link">
         <collision name="collision">
           <geometry>
             <box>
-              <size>8 0.1 2</size>
+              <size>4.722 0.15 2.5</size>
             </box>
           </geometry>
         </collision>
@@ -85,23 +84,23 @@
         <visual name="visual">
           <geometry>
             <box>
-              <size>8 0.1 2</size>
+              <size>4.722 0.15 2.5</size>
             </box>
           </geometry>
         </visual>
       </link>
     </model>
 
-    <!-- South wall -->
+    <!-- Bottom hallway wall -->
     <model name="south_wall">
       <static>true</static>
-      <pose>0 -4 1 0 0 0</pose>
+      <pose>2.286 0 1.25 0 0 0</pose>
 
       <link name="wall_link">
         <collision name="collision">
           <geometry>
             <box>
-              <size>8 0.1 2</size>
+              <size>4.722 0.15 2.5</size>
             </box>
           </geometry>
         </collision>
@@ -109,47 +108,23 @@
         <visual name="visual">
           <geometry>
             <box>
-              <size>8 0.1 2</size>
+              <size>4.722 0.15 2.5</size>
             </box>
           </geometry>
         </visual>
       </link>
     </model>
 
-    <!-- East wall -->
-    <model name="east_wall">
-      <static>true</static>
-      <pose>4 0 1 0 0 0</pose>
-
-      <link name="wall_link">
-        <collision name="collision">
-          <geometry>
-            <box>
-              <size>0.1 8 2</size>
-            </box>
-          </geometry>
-        </collision>
-
-        <visual name="visual">
-          <geometry>
-            <box>
-              <size>0.1 8 2</size>
-            </box>
-          </geometry>
-        </visual>
-      </link>
-    </model>
-
-    <!-- West wall -->
+    <!-- Left outside wall -->
     <model name="west_wall">
       <static>true</static>
-      <pose>-4 0 1 0 0 0</pose>
+      <pose>0 3.048 1.25 0 0 0</pose>
 
       <link name="wall_link">
         <collision name="collision">
           <geometry>
             <box>
-              <size>0.1 8 2</size>
+              <size>0.15 6.246 2.5</size>
             </box>
           </geometry>
         </collision>
@@ -157,7 +132,103 @@
         <visual name="visual">
           <geometry>
             <box>
-              <size>0.1 8 2</size>
+              <size>0.15 6.246 2.5</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Right outside wall -->
+    <model name="east_wall">
+      <static>true</static>
+      <pose>4.572 3.048 1.25 0 0 0</pose>
+
+      <link name="wall_link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.15 6.246 2.5</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.15 6.246 2.5</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Wall separating room from long hallway -->
+    <model name="room_east_wall">
+      <static>true</static>
+      <pose>3.048 3.810 1.25 0 0 0</pose>
+
+      <link name="wall_link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.15 4.722 2.5</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.15 4.722 2.5</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Left side of room doorway -->
+    <model name="room_south_wall_west">
+      <static>true</static>
+      <pose>0.3435 1.524 1.25 0 0 0</pose>
+
+      <link name="wall_link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.837 0.15 2.5</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.837 0.15 2.5</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Right side of room doorway -->
+    <model name="room_south_wall_east">
+      <static>true</static>
+      <pose>2.7045 1.524 1.25 0 0 0</pose>
+
+      <link name="wall_link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.837 0.15 2.5</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.837 0.15 2.5</size>
             </box>
           </geometry>
         </visual>
@@ -166,4 +237,3 @@
 
   </world>
 </sdf>
-

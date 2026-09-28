@@ -24,8 +24,19 @@ ament_target_dependencies(reactive_turtlebot
   ros_gz_interfaces
 )
 
+add_executable(occupancy_grid_mapper
+  src/occupancy_grid_mapper.cpp
+)
+
+ament_target_dependencies(occupancy_grid_mapper
+  rclcpp
+  sensor_msgs
+  nav_msgs
+)
+
 install(TARGETS
   reactive_turtlebot
+  occupancy_grid_mapper
   DESTINATION lib/${PROJECT_NAME}
 )
 
