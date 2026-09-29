@@ -132,5 +132,7 @@ def generate_launch_description():
         gazebo,
         clock_bridge,
         turtlebot_spawn,
-        lidar_bridge
+        lidar_bridge,
+        reactive_node,
+        mapper_node
     ])
