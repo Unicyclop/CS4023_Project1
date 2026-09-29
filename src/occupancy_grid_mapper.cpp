@@ -14,7 +14,7 @@ public:
     //added fix for velocity time out
         : Node("occupancy_grid_mapper",
        rclcpp::NodeOptions().parameter_overrides(
-           {rclcpp::Parameter("use_sim_time", true)})),
+           {rclcpp::Parameter("use_sim_time", true)}))
     {
         scan_sub_ =
             this->create_subscription<sensor_msgs::msg::LaserScan>(
