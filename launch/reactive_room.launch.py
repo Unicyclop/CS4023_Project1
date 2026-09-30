@@ -100,9 +100,39 @@ def generate_launch_description():
         }.items()
     )
 
+
+    reactive_node = Node(
+        package='reactive_turtlebot',
+        executable='reactive_turtlebot',
+        name='reactive_turtlebot',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+        remappings=[
+            ('/cmd_vel', '/robot1/diffdrive_controller/cmd_vel'),
+            ('/scan', '/robot1/scan'),
+            ('/odom', '/robot1/odom'),
+            ('/bumper_contact', '/robot1/bumper_contact'),
+        ],
+    )
+
+    mapper_node = Node(
+        package='reactive_turtlebot',
+        executable='occupancy_grid_mapper',
+        name='occupancy_grid_mapper',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+        remappings=[
+            ('/scan', '/robot1/scan'),
+            ('/odom', '/robot1/odom'),
+        ],
+    )
+
+
     return LaunchDescription([
         gazebo,
         clock_bridge,
         turtlebot_spawn,
-        lidar_bridge
+        lidar_bridge,
+        reactive_node,
+        mapper_node
     ])

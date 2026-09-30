@@ -16,7 +16,10 @@ class ReactiveTurtleBot : public rclcpp::Node
 {
 public:
     ReactiveTurtleBot()
-        : Node("reactive_turtlebot"),
+    //Adding fix for velocity time out
+        : Node("reactive_turtlebot",
+           rclcpp::NodeOptions().parameter_overrides(
+           {rclcpp::Parameter("use_sim_time", true)})),
           random_generator_(std::random_device{}()),
           random_turn_(-15.0, 15.0)
     {
