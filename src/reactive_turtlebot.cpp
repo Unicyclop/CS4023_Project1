@@ -21,7 +21,7 @@ public:
            rclcpp::NodeOptions().parameter_overrides(
            {rclcpp::Parameter("use_sim_time", true)})),
           random_generator_(std::random_device{}()),
-          random_turn_(0, 1)
+          random_turn_(-15.0, 15.0)
     {
         cmd_pub_ =
             this->create_publisher<geometry_msgs::msg::TwistStamped>(
@@ -82,8 +82,6 @@ private:
     static constexpr double TURN_SPEED = 0.6;
 
     static constexpr double ESCAPE_ANGLE = 175.0 * M_PI / 180.0;
-    static constexpr double RANDOM_TURN_ANGLE =
-        15.0 * M_PI / 180.0;
 
     void scanCallback(
         const sensor_msgs::msg::LaserScan::SharedPtr msg)
@@ -281,17 +279,15 @@ private:
 
     void startRandomTurn()
     {
-        int direction =
+        double random_degrees =
             random_turn_(random_generator_);
 
-        if (direction == 0)
-        {
-            random_turn_direction_ = -1.0;
-        }
-        else
-        {
-            random_turn_direction_ = 1.0;
-        }
+        random_turn_direction_ =
+            (random_degrees < 0.0) ? -1.0 : 1.0;
+
+        random_turn_angle_ =
+            std::fabs(random_degrees) *
+            M_PI / 180.0;
 
         random_turning_ = true;
 
@@ -300,7 +296,8 @@ private:
 
         RCLCPP_INFO(
             this->get_logger(),
-            "Starting random 15 degree turn");
+            "Starting random turn: %.1f degrees",
+            random_degrees);
     }
 
     void controlLoop()
@@ -367,6 +364,15 @@ private:
             left_distance_,
             front_distance_,
             right_distance_);
+
+	RCLCPP_INFO_THROTTLE(
+    	   this->get_logger(),
+           *this->get_clock(),
+    	   1000,
+    	   "ODOM | X: %.2f | Y: %.2f | DISTANCE: %.2f m",
+    	   current_x_,
+    	   current_y_,
+    	   distanceTraveled());
 
         /*
          * Priority 2:
@@ -452,10 +458,22 @@ private:
             if (left_distance_ < right_distance_)
             {
                 command.twist.angular.z = -TURN_SPEED;
+
+                RCLCPP_INFO_THROTTLE(
+                    this->get_logger(),
+                    *this->get_clock(),
+                    1000,
+                    "Obstacle detected closer on LEFT -> commanding RIGHT turn");
             }
             else
             {
                 command.twist.angular.z = TURN_SPEED;
+
+                RCLCPP_INFO_THROTTLE(
+                    this->get_logger(),
+                    *this->get_clock(),
+                    1000,
+                    "Obstacle detected closer on RIGHT -> commanding LEFT turn");
             }
 
             RCLCPP_INFO_THROTTLE(
@@ -476,7 +494,7 @@ private:
                     current_yaw_,
                     random_turn_start_yaw_);
 
-            if (turned < RANDOM_TURN_ANGLE)
+            if (turned < random_turn_angle_)
             {
                 command.twist.linear.x = 0.0;
 
@@ -488,7 +506,7 @@ private:
                     this->get_logger(),
                     *this->get_clock(),
                     1000,
-                    "Performing random 15 degree turn");
+                    "Performing random turn");
             }
             else
             {
@@ -571,6 +589,7 @@ private:
 
     double escape_start_yaw_ = 0.0;
     double random_turn_start_yaw_ = 0.0;
+    double random_turn_angle_ = 0.0;
 
     double random_turn_direction_ = 1.0;
 
@@ -584,7 +603,7 @@ private:
 
     std::mt19937 random_generator_;
 
-    std::uniform_int_distribution<int> random_turn_;
+    std::uniform_real_distribution<double> random_turn_;
 };
 
 int main(int argc, char * argv[])
