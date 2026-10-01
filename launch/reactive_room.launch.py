@@ -108,7 +108,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{'use_sim_time': True}],
         remappings=[
-            ('/cmd_vel', '/robot1/diffdrive_controller/cmd_vel'),
+            ('/cmd_vel', '/robot1/cmd_vel'),
             ('/scan', '/robot1/scan'),
             ('/odom', '/robot1/odom'),
             ('/bumper_contact', '/robot1/bumper_contact'),
