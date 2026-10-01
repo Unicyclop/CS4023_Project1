@@ -3,7 +3,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
@@ -128,10 +128,12 @@ def generate_launch_description():
     )
 
      # Delay the start of the reactive_node and mapper_node to ensure that the TurtleBot has spawned and the bridges are established.
+     # Removing teh timer action to see if it helps with the issue of the turtlebot not moving in the simulation.
     return LaunchDescription([
         gazebo,
         clock_bridge,
         turtlebot_spawn,
         lidar_bridge,
-        TimerAction(period=15.0, actions=[reactive_node, mapper_node])
+        reactive_node,
+        mapper_node
     ])
