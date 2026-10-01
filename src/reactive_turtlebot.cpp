@@ -302,10 +302,8 @@ private:
 
     void controlLoop()
     {
+        /*removing command.header.stamp to stop stamping the command, potentially causing issues with slow updates */
         geometry_msgs::msg::TwistStamped command;
-
-        command.header.stamp =
-            this->get_clock()->now();
 
         /*
         * Clear the bumper state when contact messages
