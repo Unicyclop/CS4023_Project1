@@ -94,7 +94,7 @@ def generate_launch_description():
             'nav2': 'false',
             'x': '1.5',
             'y': '3.5',
-            'z': '0.1',
+            'z': '0.2',
             'yaw': '0.0',
             'namespace': 'robot1',
         }.items()

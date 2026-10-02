@@ -113,6 +113,7 @@ private:
 
             double world_angle =
                 robot_yaw_ +
+                M_PI_2 +
                 scan_angle;
 
             double obstacle_x =
