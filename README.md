@@ -112,21 +112,11 @@ ros2 launch reactive_turtlebot reactive_room.launch.py
 
 Wait for Gazebo and the TurtleBot 4 to finish loading.
 
-### 3. Run the Reactive Controller
+The launch file starts the simulation, required bridges, reactive controller, and occupancy-grid mapper. The controller terminal output displays LiDAR and odometry information along with messages showing active behaviors such as obstacle avoidance, escape turns, random turns, and bumper responses.
 
-In another terminal:
+### 3. Run Keyboard Control
 
-```bash
-source /opt/ros/jazzy/setup.bash
-source ~/ros2_ws/install/setup.bash
-ros2 run reactive_turtlebot reactive_turtlebot
-```
-
-The terminal prints LiDAR information and messages showing behaviors such as obstacle avoidance, escape turns, random turns, keyboard control, and bumper collisions.
-
-### 4. Run Keyboard Control
-
-In another terminal:
+To manually control the robot, open another terminal and run:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -148,32 +138,32 @@ l = turn right
 k = stop
 ```
 
-Keyboard commands pass through the reactive controller so that the higher-priority bumper halt can still override human movement.
+Keyboard commands pass through the reactive controller so that higher-priority safety behavior can override manual movement when necessary.
 
-### 5. Run the Occupancy Grid Mapper
+### 4. View the Occupancy Grid
 
-In another terminal:
+The occupancy-grid mapper is started automatically by `reactive_room.launch.py`.
 
-```bash
-source /opt/ros/jazzy/setup.bash
-source ~/ros2_ws/install/setup.bash
-ros2 run reactive_turtlebot occupancy_grid_mapper
-```
-
-Check the map with:
+To verify that the map is being published:
 
 ```bash
 ros2 topic info /map
 ros2 topic echo /map --once
 ```
 
-To visualize it:
+To visualize the map:
 
 ```bash
 rviz2
 ```
 
-Add a **Map** display in RViz and select `/map`.
+In RViz:
+
+1. Set **Fixed Frame** to `robot1/odom`.
+2. Add a **Map** display and select `/map`.
+3. Optionally add a **LaserScan** display and select `/robot1/scan`.
+
+The occupancy grid will update as the TurtleBot explores the environment.
 
 ## Testing Status
 
