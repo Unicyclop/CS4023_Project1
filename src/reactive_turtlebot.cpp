@@ -322,9 +322,13 @@ private:
             {
                 bumper_detected_ = false;
 
+                backing_up_ = true;
+                backup_start_x_ = current_x_;
+                backup_start_y_ = current_y_;
+
                 RCLCPP_INFO(
                     this->get_logger(),
-                    "Bumper contact cleared");
+                    "Bumper contact cleared - backing up");
             }
         }
         /*
@@ -345,6 +349,41 @@ private:
             cmd_pub_->publish(command);
 
             return;
+        }
+
+        if (backing_up_)
+        {
+            double dx = current_x_ - backup_start_x_;
+            double dy = current_y_ - backup_start_y_;
+
+            double backup_distance =
+                std::sqrt(dx * dx + dy * dy);
+
+            if (backup_distance < 0.15)
+            {
+                command.twist.linear.x = -0.10;
+                command.twist.angular.z = 0.0;
+
+                RCLCPP_INFO_THROTTLE(
+                    this->get_logger(),
+                    *this->get_clock(),
+                    1000,
+                    "Backing away from bumper collision");
+
+                cmd_pub_->publish(command);
+                return;
+            }
+            else
+            {
+                backing_up_ = false;
+
+                start_x_ = current_x_;
+                start_y_ = current_y_;
+
+                RCLCPP_INFO(
+                    this->get_logger(),
+                    "Backup complete");
+            }
         }
 
         if (!position_initialized_)
@@ -447,42 +486,70 @@ private:
         }
 
         /*
-         * Priority 4:
-         * Avoid an asymmetric obstacle.
-         */
-        else if (front_distance_ <= OBSTACLE_DISTANCE ||
-                 left_distance_ <= OBSTACLE_DISTANCE ||
-                 right_distance_ <= OBSTACLE_DISTANCE)
-        {
-            command.twist.linear.x = 0.0;
-
-            if (left_distance_ < right_distance_)
+            * Priority 4:
+            * Avoid an asymmetric obstacle.
+            * If avoidance lasts too long, perform the existing escape turn.
+            */
+            else if (front_distance_ <= OBSTACLE_DISTANCE ||
+                    left_distance_ <= OBSTACLE_DISTANCE ||
+                    right_distance_ <= OBSTACLE_DISTANCE)
             {
-                command.twist.angular.z = -TURN_SPEED;
+                if (!avoiding_obstacle_)
+                {
+                    avoiding_obstacle_ = true;
+                    obstacle_avoidance_start_time_ =
+                        this->get_clock()->now();
+                }
 
-                RCLCPP_INFO_THROTTLE(
-                    this->get_logger(),
-                    *this->get_clock(),
-                    1000,
-                    "Obstacle detected closer on LEFT -> commanding RIGHT turn");
+                double avoidance_time =
+                    (this->get_clock()->now() -
+                    obstacle_avoidance_start_time_).seconds();
+
+                if (avoidance_time >= 2.0)
+                {
+                    avoiding_obstacle_ = false;
+
+                    RCLCPP_WARN(
+                        this->get_logger(),
+                        "Obstacle avoidance stuck - starting escape");
+
+                    startEscape();
+
+                    command.twist.linear.x = 0.0;
+                    command.twist.angular.z = TURN_SPEED;
+                }
+                else
+                {
+                    command.twist.linear.x = 0.0;
+
+                    if (left_distance_ < right_distance_)
+                    {
+                        command.twist.angular.z = -TURN_SPEED;
+
+                        RCLCPP_INFO_THROTTLE(
+                            this->get_logger(),
+                            *this->get_clock(),
+                            1000,
+                            "Obstacle detected closer on LEFT -> commanding RIGHT turn");
+                    }
+                    else
+                    {
+                        command.twist.angular.z = TURN_SPEED;
+
+                        RCLCPP_INFO_THROTTLE(
+                            this->get_logger(),
+                            *this->get_clock(),
+                            1000,
+                            "Obstacle detected closer on RIGHT -> commanding LEFT turn");
+                    }
+
+                    RCLCPP_INFO_THROTTLE(
+                        this->get_logger(),
+                        *this->get_clock(),
+                        1000,
+                        "Avoiding asymmetric obstacle");
+                }
             }
-            else
-            {
-                command.twist.angular.z = TURN_SPEED;
-
-                RCLCPP_INFO_THROTTLE(
-                    this->get_logger(),
-                    *this->get_clock(),
-                    1000,
-                    "Obstacle detected closer on RIGHT -> commanding LEFT turn");
-            }
-
-            RCLCPP_INFO_THROTTLE(
-                this->get_logger(),
-                *this->get_clock(),
-                1000,
-                "Avoiding asymmetric obstacle");
-        }
 
         /*
          * Priority 5:
@@ -490,6 +557,8 @@ private:
          */
         else if (random_turning_)
         {
+            avoiding_obstacle_ = false;
+
             double turned =
                 angleDifference(
                     current_yaw_,
@@ -598,9 +667,16 @@ private:
     
     bool position_initialized_ = false;
     bool bumper_detected_ = false;
+    bool backing_up_ = false;
+    bool avoiding_obstacle_ = false;
     bool keyboard_active_ = false;
     bool escaping_ = false;
     bool random_turning_ = false;
+
+    rclcpp::Time obstacle_avoidance_start_time_{0, 0, RCL_ROS_TIME};
+
+    double backup_start_x_ = 0.0;
+    double backup_start_y_ = 0.0;
 
     std::mt19937 random_generator_;
 
