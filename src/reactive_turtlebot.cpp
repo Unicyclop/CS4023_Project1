@@ -375,7 +375,7 @@ private:
             }
             else
             {
-                backing_up_ = false;
+                backing_up_ = true;
 
                 start_x_ = current_x_;
                 start_y_ = current_y_;
