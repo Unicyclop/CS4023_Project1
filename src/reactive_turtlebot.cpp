@@ -314,12 +314,15 @@ private:
             y_difference * y_difference);
     }
 
-    void startEscape()
+        void startEscape()
     {
         escaping_ = true;
 
         escape_start_yaw_ =
             current_yaw_;
+
+        escape_turned_ = 0.0;               // NEW
+        escape_last_yaw_ = current_yaw_;    // NEW
 
         RCLCPP_INFO(
             this->get_logger(),
@@ -523,14 +526,22 @@ private:
          * Priority 3:
          * Continue an escape that has already started.
          */
-        else if (escaping_)
+                else if (escaping_)
         {
-            double turned =
-                angleDifference(
-                    current_yaw_,
-                    escape_start_yaw_);
+            // NEW: add up the yaw change each tick so passing 180 deg can't
+            // be missed and wrap back around to 0
+            double yaw_step = current_yaw_ - escape_last_yaw_;
+            while (yaw_step > M_PI)  { yaw_step -= 2.0 * M_PI; }
+            while (yaw_step < -M_PI) { yaw_step += 2.0 * M_PI; }
+            escape_turned_ += std::fabs(yaw_step);
+            escape_last_yaw_ = current_yaw_;
 
-            if (turned < ESCAPE_ANGLE)
+            // NEW: if the front is still blocked after the turn, keep turning
+            // (at most one full rotation) instead of driving into the wall
+            bool still_blocked = (front_distance_ <= OBSTACLE_DISTANCE);
+
+            if (escape_turned_ < ESCAPE_ANGLE ||                      // CHANGED
+                (still_blocked && escape_turned_ < 2.0 * M_PI))       // NEW
             {
                 command.twist.linear.x = 0.0;
                 command.twist.angular.z = TURN_SPEED;
@@ -539,7 +550,8 @@ private:
                     this->get_logger(),
                     *this->get_clock(),
                     1000,
-                    "Escaping symmetric obstacle");
+                    "Escaping obstacle (turned %.0f deg)",
+                    escape_turned_ * 180.0 / M_PI);
             }
             else
             {
@@ -754,6 +766,11 @@ private:
     double start_y_ = 0.0;
 
     double escape_start_yaw_ = 0.0;
+
+        
+    double escape_turned_ = 0.0;      // NEW: total angle turned during the escape
+    double escape_last_yaw_ = 0.0;    // NEW: yaw at the previous tick
+
     double random_turn_start_yaw_ = 0.0;
     double random_turn_angle_ = 0.0;
 
