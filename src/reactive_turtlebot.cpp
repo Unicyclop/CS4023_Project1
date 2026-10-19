@@ -78,7 +78,7 @@ private:
     //static constexpr double OBSTACLE_DISTANCE = 0.3048;
     // NEW: scan is measured from the LiDAR, not the robot's front edge.
     // Measure the real distance from the LiDAR center to the front of the robot.
-    static constexpr double LIDAR_TO_FRONT = 0.21;
+    static constexpr double LIDAR_TO_FRONT = 0.35;
     static constexpr double OBSTACLE_DISTANCE = ONE_FOOT + LIDAR_TO_FRONT;   // CHANGED
     static constexpr double SYMMETRY_TOLERANCE = 0.10;
 
