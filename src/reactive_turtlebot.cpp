@@ -187,27 +187,34 @@ private:
         }
     }
 
-    void hazardCallback(
-    const irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
-{
-    for (const auto & detection : msg->detections)
+        void hazardCallback(
+        const irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
     {
-        if (detection.type ==
-            irobot_create_msgs::msg::HazardDetection::BUMP)
+        for (const auto & detection : msg->detections)
         {
-            bumper_detected_ = true;
-            last_bumper_contact_time_ = this->get_clock()->now();
+            // NEW: the base is refusing to reverse any further
+            if (detection.type ==
+                irobot_create_msgs::msg::HazardDetection::BACKUP_LIMIT)
+            {
+                backup_limit_hit_ = true;
+            }
 
-            RCLCPP_WARN_THROTTLE(
-                this->get_logger(),
-                *this->get_clock(),
-                1000,
-                "Bumper collision detected (%s)",
-                detection.header.frame_id.c_str());
-            return;
+            if (detection.type ==
+                irobot_create_msgs::msg::HazardDetection::BUMP)
+            {
+                bumper_detected_ = true;
+                last_bumper_contact_time_ =
+                    this->get_clock()->now();
+
+                RCLCPP_WARN_THROTTLE(
+                    this->get_logger(),
+                    *this->get_clock(),
+                    1000,
+                    "Bumper collision detected (%s)",
+                    detection.header.frame_id.c_str());
+            }
         }
     }
-}
 
     double getYaw(
         const geometry_msgs::msg::Quaternion & orientation)
@@ -341,6 +348,9 @@ private:
                 backup_start_x_ = current_x_;
                 backup_start_y_ = current_y_;
 
+                backup_start_time_ = this->get_clock()->now();   // NEW
+                backup_limit_hit_ = false;                       // NEW
+
                 RCLCPP_INFO(
                     this->get_logger(),
                     "Bumper contact cleared - backing up");
@@ -374,7 +384,14 @@ private:
             double backup_distance =
                 std::sqrt(dx * dx + dy * dy);
 
-            if (backup_distance < 0.15)
+            // NEW: how long this backup has been running
+            double backup_elapsed =
+                (this->get_clock()->now() - backup_start_time_).seconds();
+
+            // CHANGED: also stop on timeout or backup limit
+            if (backup_distance < 0.15 &&
+                backup_elapsed < 3.0 &&
+                !backup_limit_hit_)
             {
                 command.twist.linear.x = -0.10;
                 command.twist.angular.z = 0.0;
@@ -391,13 +408,17 @@ private:
             else
             {
                 backing_up_ = false;
+                backup_limit_hit_ = false;   // NEW
 
                 start_x_ = current_x_;
                 start_y_ = current_y_;
 
+                // CHANGED: log why it finished
                 RCLCPP_INFO(
                     this->get_logger(),
-                    "Backup complete");
+                    "Backup finished (distance %.2f m, %.1f s)",
+                    backup_distance,
+                    backup_elapsed);
             }
         }
 
@@ -716,6 +737,11 @@ private:
 
     double backup_start_x_ = 0.0;
     double backup_start_y_ = 0.0;
+
+    // NEW: backup timeout and backup-limit tracking
+    rclcpp::Time backup_start_time_{0, 0, RCL_ROS_TIME};
+    bool backup_limit_hit_ = false;
+    
 
     std::mt19937 random_generator_;
 
