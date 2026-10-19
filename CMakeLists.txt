@@ -10,7 +10,7 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(ros_gz_interfaces REQUIRED)
+find_package(irobot_create_msgs REQUIRED)
 
 add_executable(reactive_turtlebot
   src/reactive_turtlebot.cpp
@@ -21,7 +21,7 @@ ament_target_dependencies(reactive_turtlebot
   geometry_msgs
   sensor_msgs
   nav_msgs
-  ros_gz_interfaces
+  irobot_create_msgs
 )
 
 add_executable(occupancy_grid_mapper

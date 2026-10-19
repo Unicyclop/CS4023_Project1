@@ -8,7 +8,9 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "ros_gz_interfaces/msg/contacts.hpp"
+// remove: #include "ros_gz_interfaces/msg/contacts.hpp"
+#include "irobot_create_msgs/msg/hazard_detection_vector.hpp"
+#include "irobot_create_msgs/msg/hazard_detection.hpp"
 
 using namespace std::chrono_literals;
 
@@ -52,12 +54,12 @@ public:
                     this,
                     std::placeholders::_1));
 
-        bumper_sub_ =
-            this->create_subscription<ros_gz_interfaces::msg::Contacts>(
-                "/bumper_contact",
-                10,
+        hazard_sub_ =
+            this->create_subscription<irobot_create_msgs::msg::HazardDetectionVector>(
+                "/hazard_detection",
+                rclcpp::SensorDataQoS(),
                 std::bind(
-                    &ReactiveTurtleBot::bumperCallback,
+                    &ReactiveTurtleBot::hazardCallback,
                     this,
                     std::placeholders::_1));
 
@@ -185,22 +187,27 @@ private:
         }
     }
 
-    void bumperCallback(
-        const ros_gz_interfaces::msg::Contacts::SharedPtr msg)
+    void hazardCallback(
+    const irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
+{
+    for (const auto & detection : msg->detections)
     {
-        if (!msg->contacts.empty())
+        if (detection.type ==
+            irobot_create_msgs::msg::HazardDetection::BUMP)
         {
             bumper_detected_ = true;
-            last_bumper_contact_time_ =
-                this->get_clock()->now();
+            last_bumper_contact_time_ = this->get_clock()->now();
 
             RCLCPP_WARN_THROTTLE(
                 this->get_logger(),
                 *this->get_clock(),
                 1000,
-                "Bumper collision detected");
+                "Bumper collision detected (%s)",
+                detection.header.frame_id.c_str());
+            return;
         }
     }
+}
 
     double getYaw(
         const geometry_msgs::msg::Quaternion & orientation)
@@ -661,8 +668,8 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
         keyboard_sub_;
 
-    rclcpp::Subscription<ros_gz_interfaces::msg::Contacts>::SharedPtr
-        bumper_sub_;
+    rclcpp::Subscription<irobot_create_msgs::msg::HazardDetectionVector>::SharedPtr
+        hazard_sub_;
 
     rclcpp::TimerBase::SharedPtr timer_;
 
