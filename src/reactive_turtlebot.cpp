@@ -703,6 +703,13 @@ private:
             command.twist.angular.z = 0.0;
         }
 
+                RCLCPP_INFO_THROTTLE(
+            this->get_logger(), *this->get_clock(), 200,
+            "DBG front=%.2f thresh=%.2f esc=%d avoid=%d | cmd lin=%.2f ang=%.2f",
+            front_distance_, OBSTACLE_DISTANCE,
+            escaping_, avoiding_obstacle_,
+            command.twist.linear.x, command.twist.angular.z);
+
         cmd_pub_->publish(command);
     }
 
