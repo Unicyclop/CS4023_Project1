@@ -17,9 +17,7 @@ class ReactiveTurtleBot : public rclcpp::Node
 public:
     ReactiveTurtleBot()
     //Adding fix for velocity time out
-        : Node("reactive_turtlebot",
-           rclcpp::NodeOptions().parameter_overrides(
-           {rclcpp::Parameter("use_sim_time", true)})),
+        : Node("reactive_turtlebot"),
           random_generator_(std::random_device{}()),
           random_turn_(-15.0, 15.0)
     {
@@ -91,6 +89,10 @@ private:
             return;
         }
 
+        scan_received_ = true;
+        front_scan_valid_ = false;
+        last_scan_time_ = std::chrono::steady_clock::now();
+
         left_distance_ =
             std::numeric_limits<float>::infinity();
 
@@ -116,25 +118,31 @@ private:
             if (angle >= -M_PI / 2 &&
                 angle < -M_PI / 12)
             {
-                if (distance < left_distance_)
+                if (distance < right_distance_)
                 {
-                    left_distance_ = distance;
+                    right_distance_ = distance;
                 }
             }
             else if (angle >= -M_PI / 12 &&
                      angle <= M_PI / 12)
             {
-                if (distance < front_distance_)
+                if (distance >= msg->range_min &&
+                    distance <= msg->range_max)
                 {
-                    front_distance_ = distance;
+                    front_scan_valid_ = true;
+
+                    if (distance < front_distance_)
+                    {
+                        front_distance_ = distance;
+                    }
                 }
             }
             else if (angle > M_PI / 12 &&
                      angle <= M_PI / 2)
             {
-                if (distance < right_distance_)
+                if (distance < left_distance_)
                 {
-                    right_distance_ = distance;
+                    left_distance_ = distance;
                 }
             }
         }
@@ -375,7 +383,7 @@ private:
             }
             else
             {
-                backing_up_ = true;
+                backing_up_ = false;
 
                 start_x_ = current_x_;
                 start_y_ = current_y_;
@@ -395,6 +403,27 @@ private:
 
             return;
         }
+
+        bool scan_fresh =
+            scan_received_ &&
+            (std::chrono::steady_clock::now() - last_scan_time_
+                < std::chrono::milliseconds(500));
+
+        if (!scan_fresh || !front_scan_valid_)
+        {
+            command.twist.linear.x = 0.0;
+            command.twist.angular.z = 0.0;
+
+            RCLCPP_WARN_THROTTLE(
+                this->get_logger(),
+                *this->get_clock(),
+                1000,
+                "LiDAR data missing, stale, or invalid - stopping");
+
+            cmd_pub_->publish(command);
+            return;
+        }
+
 
 	RCLCPP_INFO_THROTTLE(
             this->get_logger(),
@@ -490,9 +519,7 @@ private:
             * Avoid an asymmetric obstacle.
             * If avoidance lasts too long, perform the existing escape turn.
             */
-            else if (front_distance_ <= OBSTACLE_DISTANCE ||
-                    left_distance_ <= OBSTACLE_DISTANCE ||
-                    right_distance_ <= OBSTACLE_DISTANCE)
+            else if (front_distance_ <= OBSTACLE_DISTANCE)
             {
                 if (!avoiding_obstacle_)
                 {
@@ -649,6 +676,11 @@ private:
 
     float right_distance_ =
         std::numeric_limits<float>::infinity();
+
+    bool scan_received_ = false;
+    bool front_scan_valid_ = false;
+
+    std::chrono::steady_clock::time_point last_scan_time_;
 
     double current_x_ = 0.0;
     double current_y_ = 0.0;
