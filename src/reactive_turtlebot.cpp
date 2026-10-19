@@ -87,6 +87,9 @@ private:
 
     static constexpr double ESCAPE_ANGLE = 175.0 * M_PI / 180.0;
 
+    // Front cone must cover the robot's width (~0.17 m each side at ~0.3-0.5 m)
+    static constexpr double FRONT_HALF_ANGLE = 30.0 * M_PI / 180.0;
+
     void scanCallback(
         const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
@@ -122,15 +125,15 @@ private:
             }
 
             if (angle >= -M_PI / 2 &&
-                angle < -M_PI / 12)
+                angle < -FRONT_HALF_ANGLE)                 // CHANGED
             {
                 if (distance < right_distance_)
                 {
                     right_distance_ = distance;
                 }
             }
-            else if (angle >= -M_PI / 12 &&
-                     angle <= M_PI / 12)
+            else if (angle >= -FRONT_HALF_ANGLE &&         // CHANGED
+                     angle <= FRONT_HALF_ANGLE)            // CHANGED
             {
                 if (distance >= msg->range_min &&
                     distance <= msg->range_max)
@@ -143,7 +146,7 @@ private:
                     }
                 }
             }
-            else if (angle > M_PI / 12 &&
+            else if (angle > FRONT_HALF_ANGLE &&           // CHANGED
                      angle <= M_PI / 2)
             {
                 if (distance < left_distance_)
