@@ -152,7 +152,27 @@ private:
                 }
             }
         }
+
+                // TEMPORARY DEBUG: where is the nearest return in the full scan?
+        float nearest = std::numeric_limits<float>::infinity();
+        double nearest_angle = 0.0;
+        for (size_t i = 0; i < msg->ranges.size(); i++)
+        {
+            float d = msg->ranges[i];
+            if (std::isfinite(d) && d >= msg->range_min && d < nearest)
+            {
+                nearest = d;
+                nearest_angle = msg->angle_min + i * msg->angle_increment;
+            }
+        }
+        RCLCPP_INFO_THROTTLE(
+            this->get_logger(), *this->get_clock(), 500,
+            "SCAN DEBUG | nearest %.2f m at %.0f deg | angle_min %.2f angle_max %.2f",
+            nearest, nearest_angle * 180.0 / M_PI,
+            msg->angle_min, msg->angle_max);
+
     }
+
 
     void odomCallback(
         const nav_msgs::msg::Odometry::SharedPtr msg)
