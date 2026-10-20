@@ -156,22 +156,6 @@ private:
                 }
             }
            
-
-                    float nearest = std::numeric_limits<float>::infinity();
-        double nearest_angle = 0.0;
-        for (size_t i = 0; i < msg->ranges.size(); i++)
-        {
-            float d = msg->ranges[i];
-            if (std::isfinite(d) && d >= 0.16 &&
-                d >= msg->range_min && d < nearest)
-            {
-                nearest = d;
-                nearest_angle = msg->angle_min + i * msg->angle_increment;
-            }
-        }
-        RCLCPP_INFO_THROTTLE(
-            this->get_logger(), *this->get_clock(), 500,
-            "NEAREST %.2f m at %.0f deg", nearest, nearest_angle * 180.0 / M_PI);
         }
 
                 
@@ -361,33 +345,7 @@ private:
         command.header.stamp = 
             this->get_clock()->now();
 
-        /*
-        * Clear the bumper state when contact messages
-        * have stopped arriving.
-        */
-        if (bumper_detected_)
-        {
-            double time_since_contact =
-                (this->get_clock()->now() -
-                last_bumper_contact_time_).seconds();
-
-            if (time_since_contact > 0.5)
-            {
-                bumper_detected_ = false;
-
-                backing_up_ = true;
-                backup_start_x_ = current_x_;
-                backup_start_y_ = current_y_;
-
-                backup_start_time_ = this->get_clock()->now();   // NEW
-                backup_limit_hit_ = false;                       // NEW
-
-                RCLCPP_INFO(
-                    this->get_logger(),
-                    "Bumper contact cleared - backing up");
-            }
-        }
-        /*
+            /*
         * Priority 1:
         * Halt when a bumper collision is detected.
         */
