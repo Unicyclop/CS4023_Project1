@@ -75,7 +75,7 @@ private:
 
     // Robot behavior constants
         static constexpr double ONE_FOOT = 0.3048;
-    static constexpr double OBSTACLE_DISTANCE = 0.3048;
+    static constexpr double OBSTACLE_DISTANCE = 0.3048 + 0.60;  //Adding in length of robot to avoid hitting wall, point blank against the wall FRONT reads 0.59
     static constexpr double SYMMETRY_TOLERANCE = 0.10;
 
     static constexpr double FORWARD_SPEED = 0.2;
@@ -112,12 +112,14 @@ private:
                 msg->angle_min +
                 i * msg->angle_increment;
 
-            float distance = msg->ranges[i];
+        float distance = msg->ranges[i];
 
-            if (!std::isfinite(distance))
-            {
-                continue;
-            }
+        if (!std::isfinite(distance) ||
+            distance < msg->range_min ||
+            distance > msg->range_max)
+        {
+            continue;
+        }
 
             if (angle >= -M_PI / 2 &&
                 angle < -M_PI / 12)
@@ -149,6 +151,14 @@ private:
                     left_distance_ = distance;
                 }
             }
+            if (std::isfinite(distance) && distance < 0.40f)
+        {
+            RCLCPP_WARN(
+                this->get_logger(),
+                "Close return: angle=%.1f degrees, distance=%.2f m",
+                angle * 180.0 / M_PI,
+                distance);
+        }
         }
 
                 
