@@ -74,12 +74,8 @@ public:
 private:
 
     // Robot behavior constants
-    static constexpr double ONE_FOOT = 0.3048;
-    //static constexpr double OBSTACLE_DISTANCE = 0.3048;
-    // NEW: scan is measured from the LiDAR, not the robot's front edge.
-    // Measure the real distance from the LiDAR center to the front of the robot.
-    static constexpr double LIDAR_TO_FRONT = 0.35;
-    static constexpr double OBSTACLE_DISTANCE = ONE_FOOT + LIDAR_TO_FRONT;   // CHANGED
+        static constexpr double ONE_FOOT = 0.3048;
+    static constexpr double OBSTACLE_DISTANCE = 0.3048;
     static constexpr double SYMMETRY_TOLERANCE = 0.10;
 
     static constexpr double FORWARD_SPEED = 0.2;
@@ -87,8 +83,7 @@ private:
 
     static constexpr double ESCAPE_ANGLE = 175.0 * M_PI / 180.0;
 
-    // Front cone must cover the robot's width (~0.17 m each side at ~0.3-0.5 m)
-    static constexpr double FRONT_HALF_ANGLE = 30.0 * M_PI / 180.0;
+    
 
     void scanCallback(
         const sensor_msgs::msg::LaserScan::SharedPtr msg)
@@ -125,15 +120,15 @@ private:
             }
 
             if (angle >= -M_PI / 2 &&
-                angle < -FRONT_HALF_ANGLE)                 // CHANGED
+                angle < -M_PI / 12)
             {
                 if (distance < right_distance_)
                 {
                     right_distance_ = distance;
                 }
             }
-            else if (angle >= -FRONT_HALF_ANGLE &&         // CHANGED
-                     angle <= FRONT_HALF_ANGLE)            // CHANGED
+            else if (angle >= -M_PI / 12 &&         
+                     angle <= M_PI / 12)            
             {
                 if (distance >= msg->range_min &&
                     distance <= msg->range_max)
@@ -146,7 +141,7 @@ private:
                     }
                 }
             }
-            else if (angle > FRONT_HALF_ANGLE &&           // CHANGED
+            else if (angle > M_PI / 12 &&           
                      angle <= M_PI / 2)
             {
                 if (distance < left_distance_)
@@ -156,24 +151,7 @@ private:
             }
         }
 
-                // TEMPORARY DEBUG: where is the nearest return in the full scan?
-        float nearest = std::numeric_limits<float>::infinity();
-        double nearest_angle = 0.0;
-        for (size_t i = 0; i < msg->ranges.size(); i++)
-        {
-            float d = msg->ranges[i];
-            if (std::isfinite(d) && d >= msg->range_min && d < nearest)
-            {
-                nearest = d;
-                nearest_angle = msg->angle_min + i * msg->angle_increment;
-            }
-        }
-        RCLCPP_INFO_THROTTLE(
-            this->get_logger(), *this->get_clock(), 500,
-            "SCAN DEBUG | nearest %.2f m at %.0f deg | angle_min %.2f angle_max %.2f",
-            nearest, nearest_angle * 180.0 / M_PI,
-            msg->angle_min, msg->angle_max);
-
+                
     }
 
 
@@ -715,12 +693,7 @@ private:
             command.twist.angular.z = 0.0;
         }
 
-                RCLCPP_INFO_THROTTLE(
-            this->get_logger(), *this->get_clock(), 200,
-            "DBG front=%.2f thresh=%.2f esc=%d avoid=%d | cmd lin=%.2f ang=%.2f",
-            front_distance_, OBSTACLE_DISTANCE,
-            escaping_, avoiding_obstacle_,
-            command.twist.linear.x, command.twist.angular.z);
+             
 
         cmd_pub_->publish(command);
     }
