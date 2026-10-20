@@ -75,7 +75,7 @@ private:
 
     // Robot behavior constants
         static constexpr double ONE_FOOT = 0.3048;
-    static constexpr double OBSTACLE_DISTANCE = 0.3048;  //Adding in length of robot to avoid hitting wall, point blank against the wall FRONT reads 0.59
+    static constexpr double OBSTACLE_DISTANCE = 0.3048 + 0.30;  //Adding in length of robot to avoid hitting wall, point blank against the wall FRONT reads 0.59
     static constexpr double SYMMETRY_TOLERANCE = 0.10;
 
     static constexpr double FORWARD_SPEED = 0.2;
