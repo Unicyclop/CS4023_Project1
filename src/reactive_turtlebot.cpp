@@ -151,14 +151,7 @@ private:
                     left_distance_ = distance;
                 }
             }
-            if (std::isfinite(distance) && distance < 0.40f)
-        {
-            RCLCPP_WARN(
-                this->get_logger(),
-                "Close return: angle=%.1f degrees, distance=%.2f m",
-                angle * 180.0 / M_PI,
-                distance);
-        }
+           
         }
 
                 
