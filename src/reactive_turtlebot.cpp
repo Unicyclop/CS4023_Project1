@@ -152,6 +152,22 @@ private:
                 }
             }
            
+
+                    float nearest = std::numeric_limits<float>::infinity();
+        double nearest_angle = 0.0;
+        for (size_t i = 0; i < msg->ranges.size(); i++)
+        {
+            float d = msg->ranges[i];
+            if (std::isfinite(d) && d >= 0.16 &&
+                d >= msg->range_min && d < nearest)
+            {
+                nearest = d;
+                nearest_angle = msg->angle_min + i * msg->angle_increment;
+            }
+        }
+        RCLCPP_INFO_THROTTLE(
+            this->get_logger(), *this->get_clock(), 500,
+            "NEAREST %.2f m at %.0f deg", nearest, nearest_angle * 180.0 / M_PI);
         }
 
                 
