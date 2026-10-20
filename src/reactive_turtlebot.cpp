@@ -83,6 +83,9 @@ private:
 
     static constexpr double ESCAPE_ANGLE = 175.0 * M_PI / 180.0;
 
+    // Scan angle at which "straight ahead" actually appears (measured)
+    static constexpr double FRONT_ANGLE_OFFSET = -90.0 * M_PI / 180.0;
+
     
 
     void scanCallback(
@@ -110,7 +113,8 @@ private:
         {
             double angle =
                 msg->angle_min +
-                i * msg->angle_increment;
+                i * msg->angle_increment - FRONT_ANGLE_OFFSET;
+                angle = std::atan2(std::sin(angle), std::cos(angle));  // Normalize angle to [-pi, pi]
 
         float distance = msg->ranges[i];
 
@@ -143,8 +147,8 @@ private:
                     }
                 }
             }
-            else if (angle > M_PI / 12 &&           
-                     angle <= M_PI / 2)
+            else if (angle > M_PI / 12  &&           
+                     angle <= M_PI / 2 )
             {
                 if (distance < left_distance_)
                 {
