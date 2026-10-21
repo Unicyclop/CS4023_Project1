@@ -1,4 +1,7 @@
 # CS4023 Project 1
+## Project Team
+- Y Nguyen
+- Morris Chi
 
 ## Reactive TurtleBot 4 Simulation
 
