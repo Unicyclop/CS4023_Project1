@@ -212,7 +212,7 @@ private:
             }
 
             if (detection.type ==
-                irobot_create_msgs::msg::HazardDetection::BUMP)
+                irobot_create_msgs::msg::HazardDetection::BUMP && !backing_up_)
             {
                 bumper_detected_ = true;
                 last_bumper_contact_time_ =
@@ -349,21 +349,21 @@ private:
         * Priority 1:
         * Halt when a bumper collision is detected.
         */
-        if (bumper_detected_)
-        {
-            command.twist.linear.x = 0.0;
-            command.twist.angular.z = 0.0;
+        if (bumper_detected_ && !backing_up_)
+    {
+        bumper_detected_ = false;
+        backing_up_ = true;
 
-            RCLCPP_WARN_THROTTLE(
-                this->get_logger(),
-                *this->get_clock(),
-                1000,
-                "BUMPER ACTIVE - ROBOT HALTED");
+        backup_start_x_ = current_x_;
+        backup_start_y_ = current_y_;
 
-            cmd_pub_->publish(command);
+        backup_start_time_ = this->get_clock()->now();
+        backup_limit_hit_ = false;
 
-            return;
-        }
+        RCLCPP_WARN(
+            this->get_logger(),
+            "BUMPER ACTIVE - STARTING BACKUP");
+    }
 
         if (backing_up_)
         {
