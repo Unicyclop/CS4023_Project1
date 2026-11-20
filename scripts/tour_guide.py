@@ -2,7 +2,11 @@
 """Interactive TurtleBot 4 tour manager using Nav2."""
 
 import math
+import os
 import threading
+
+import yaml
+from ament_index_python.packages import get_package_share_directory
 
 import rclpy
 from rclpy.signals import SignalHandlerOptions
@@ -12,12 +16,56 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 
-# Development placeholders only. Do not use on a physical robot.
-TOUR_STOPS = {
-    "Stop 1": (1.0, 0.0, 0.0),
-    "Stop 2": (2.0, 1.0, 1.57),
-    "Stop 3": (0.0, 2.0, 3.14),
-}
+def load_tour_stops():
+    """Load tour destinations from the installed YAML configuration."""
+    package_share = get_package_share_directory("reactive_turtlebot")
+
+    config_path = os.path.join(
+        package_share, "config", "tour_stops.yaml"
+    )
+
+    with open(config_path, "r", encoding="utf-8") as config_file:
+        config = yaml.safe_load(config_file)
+
+    if not isinstance(config, dict):
+        raise ValueError("Tour configuration must be a YAML mapping.")
+
+    stops = config.get("tour_stops")
+
+    if not isinstance(stops, list) or not stops:
+        raise ValueError("Configuration must contain a nonempty tour_stops list.")
+
+    tour_stops = {}
+
+    for stop in stops:
+        if not isinstance(stop, dict):
+            raise ValueError("Each tour stop must be a mapping.")
+
+        name = stop["name"]
+
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("Each tour stop needs a valid name.")
+
+        if name in tour_stops:
+            raise ValueError(f"Duplicate tour stop: {name}")
+
+        coordinates = (stop["x"], stop["y"], stop["yaw"])
+
+        if any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            for value in coordinates
+        ):
+            raise ValueError(f"Invalid coordinates for {name}")
+
+        tour_stops[name] = tuple(float(value) for value in coordinates)
+
+    return tour_stops
+
+
+# Loaded once at startup.
+TOUR_STOPS = None
 
 
 class TourGuide(Node):
@@ -30,6 +78,7 @@ class TourGuide(Node):
         self.goal_handle = None
         self.busy = False
         self.cancel_requested = False
+        self.full_tour = False
         self.tour_queue = []
         self.last_feedback_distance = None
 
@@ -41,7 +90,7 @@ class TourGuide(Node):
             x, y, yaw = coords
             print(f"{index}. {name}: x={x}, y={y}, yaw={yaw}")
 
-    def start_navigation(self, stop_names):
+    def start_navigation(self, stop_names, full_tour=False):
         with self.lock:
             if self.busy:
                 print("Navigation is already active.")
@@ -53,6 +102,7 @@ class TourGuide(Node):
 
             self.busy = True
             self.cancel_requested = False
+            self.full_tour = full_tour
             self.tour_queue = list(stop_names)
 
         self._send_next_goal()
@@ -146,9 +196,14 @@ class TourGuide(Node):
                 remaining_stops = len(self.tour_queue)
 
             if remaining_stops == 0:
-                self.get_logger().info(
-                    "Tour completed successfully. All destinations reached."
-                )
+                if self.full_tour:
+                    self.get_logger().info(
+                        "Tour completed successfully. All destinations reached."
+                    )
+                else:
+                    self.get_logger().info(
+                        "Destination reached successfully."
+                    )
 
             self._send_next_goal()
         else:
@@ -176,6 +231,7 @@ class TourGuide(Node):
     def _reset_locked(self):
         self.busy = False
         self.cancel_requested = False
+        self.full_tour = False
         self.tour_queue.clear()
         self.goal_handle = None
         self.last_feedback_distance = None
@@ -222,6 +278,10 @@ class TourGuide(Node):
 
 
 def main(args=None):
+    global TOUR_STOPS
+
+    TOUR_STOPS = load_tour_stops()
+
     rclpy.init(
         args=args,
         signal_handler_options=SignalHandlerOptions.NO,
@@ -264,7 +324,7 @@ def main(args=None):
                     print("Unknown stop number.")
 
             elif choice == "3":
-                node.start_navigation(list(TOUR_STOPS))
+                node.start_navigation(list(TOUR_STOPS), full_tour=True)
 
             elif choice == "4":
                 node.cancel_navigation()

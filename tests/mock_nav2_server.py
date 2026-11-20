@@ -3,7 +3,7 @@
 
 This server simulates navigation only. It does not move a robot.
 """
-
+import argparse
 import time
 import threading
 
@@ -16,9 +16,10 @@ from rclpy.node import Node
 
 
 class MockNav2Server(Node):
-    def __init__(self):
+    def __init__(self, fail_stop=None):
         super().__init__("mock_nav2_server")
 
+        self.fail_stop = fail_stop
         self._lock = threading.Lock()
         self._goal_active = False
 
@@ -59,20 +60,47 @@ class MockNav2Server(Node):
 
             time.sleep(0.5)
 
+
         if goal_handle.is_cancel_requested:
             goal_handle.canceled()
             self.get_logger().warn("Navigation canceled.")
+
+        elif self.fail_stop is not None and (
+            (self.fail_stop == 1 and abs(x - 1.0) < 0.001 and abs(y) < 0.001)
+            or (self.fail_stop == 2 and abs(x - 2.0) < 0.001 and abs(y - 1.0) < 0.001)
+            or (self.fail_stop == 3 and abs(x) < 0.001 and abs(y - 2.0) < 0.001)
+        ):
+            goal_handle.abort()
+            self.get_logger().error(
+                "Simulated navigation failure at Stop 2."
+            )
+
         else:
             goal_handle.succeed()
-            self.get_logger().info("Navigation goal completed successfully.")
+            self.get_logger().info(
+                "Navigation goal completed successfully."
+            )
 
         return NavigateToPose.Result()
 
 
 def main(args=None):
-    rclpy.init(args=args)
+    parser = argparse.ArgumentParser(
+        description="Mock Nav2 server for TurtleBot 4 tour-guide testing."
+    )
+    parser.add_argument(
+        "--fail-stop",
+        type=int,
+        choices=[1, 2, 3],
+        default=None,
+        help="Simulate navigation failure at the selected stop.",
+    )
 
-    node = MockNav2Server()
+    options = parser.parse_args(args)
+
+    rclpy.init()
+    node = MockNav2Server(fail_stop=options.fail_stop)
+
     executor = MultiThreadedExecutor()
     executor.add_node(node)
 
