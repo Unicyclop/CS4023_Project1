@@ -10,16 +10,17 @@ import threading
 import rclpy
 from action_msgs.msg import GoalStatus
 from nav2_msgs.action import NavigateToPose
-from rclpy.action import ActionServer, CancelResponse
+from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 
 class MockNav2Server(Node):
-    def __init__(self, fail_stop=None):
+    def __init__(self, fail_stop=None, accept_delay=0.0):
         super().__init__("mock_nav2_server")
 
         self.fail_stop = fail_stop
+        self.accept_delay = accept_delay
         self._lock = threading.Lock()
         self._goal_active = False
 
@@ -28,12 +29,22 @@ class MockNav2Server(Node):
             NavigateToPose,
             "navigate_to_pose",
             execute_callback=self.execute_callback,
+            goal_callback=self.goal_callback,
             cancel_callback=self.cancel_callback,
         )
 
         self.get_logger().info(
             "Mock Nav2 server ready. Waiting for navigation goals."
         )
+
+    def goal_callback(self, goal_request):
+        if self.accept_delay > 0:
+            self.get_logger().info(
+                f"Delaying goal acceptance by {self.accept_delay} seconds."
+            )
+            time.sleep(self.accept_delay)
+
+        return GoalResponse.ACCEPT
 
     def cancel_callback(self, goal_handle):
         self.get_logger().info("Cancellation request received.")
@@ -96,10 +107,20 @@ def main(args=None):
         help="Simulate navigation failure at the selected stop.",
     )
 
+    parser.add_argument(
+        "--accept-delay",
+        type=float,
+        default=0.0,
+        help="Delay goal acceptance by the specified number of seconds.",
+    )
+
     options = parser.parse_args(args)
 
     rclpy.init()
-    node = MockNav2Server(fail_stop=options.fail_stop)
+    node = MockNav2Server(
+        fail_stop=options.fail_stop,
+        accept_delay=options.accept_delay,
+        )
 
     executor = MultiThreadedExecutor()
     executor.add_node(node)

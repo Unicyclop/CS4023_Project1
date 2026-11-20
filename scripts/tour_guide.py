@@ -120,6 +120,15 @@ class TourGuide(Node):
             self._finish_navigation()
             return
 
+        # Cancellation may have been requested while waiting for Nav2.
+        with self.lock:
+            if self.cancel_requested:
+                self.get_logger().info(
+                    "Navigation canceled before goal submission."
+                )
+                self._reset_locked()
+                return
+
         x, y, yaw = TOUR_STOPS[stop_name]
 
         goal = NavigateToPose.Goal()
@@ -130,11 +139,22 @@ class TourGuide(Node):
         goal.pose.pose.orientation.z = math.sin(yaw / 2.0)
         goal.pose.pose.orientation.w = math.cos(yaw / 2.0)
 
-        self.get_logger().info(f"Sending navigation goal: {stop_name}")
+        # Coordinate goal submission with cancellation requests.
+        with self.lock:
+            if self.cancel_requested:
+                self._reset_locked()
+                self.get_logger().info(
+                    "Navigation canceled before goal submission."
+                )
+                return
 
-        future = self.nav_client.send_goal_async(
-            goal, feedback_callback=self._feedback_callback
-        )
+            self.get_logger().info(f"Sending navigation goal: {stop_name}")
+
+            future = self.nav_client.send_goal_async(
+                goal, feedback_callback=self._feedback_callback
+            )
+
+        # Register the callback outside the lock.
         future.add_done_callback(self._goal_response_callback)
 
     def _goal_response_callback(self, future):
