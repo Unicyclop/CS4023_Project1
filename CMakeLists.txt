@@ -46,5 +46,15 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(PROGRAMS
+  scripts/tour_guide.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install tour-stop configuration files.
+install(DIRECTORY
+  config/
+  DESTINATION share/${PROJECT_NAME}/config
+)
 
 ament_package()
