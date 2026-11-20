@@ -2,6 +2,9 @@
 # Development coordinates only.
 # Replace with verified map coordinates before physical testing.
 
+# Set to true only after verifying the map and tour-stop coordinates.
+navigation_enabled: false
+
 tour_stops:
   - name: "Stop 1"
     x: 1.0

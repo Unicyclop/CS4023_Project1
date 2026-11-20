@@ -16,12 +16,12 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 
-def load_tour_stops():
-    """Load tour destinations from the installed YAML configuration."""
+def load_tour_stops(config_filename="tour_stops.yaml"):
+    """Load tour destinations from the selected YAML configuration."""
     package_share = get_package_share_directory("reactive_turtlebot")
 
     config_path = os.path.join(
-        package_share, "config", "tour_stops.yaml"
+        package_share, "config", config_filename
     )
 
     with open(config_path, "r", encoding="utf-8") as config_file:
@@ -29,6 +29,13 @@ def load_tour_stops():
 
     if not isinstance(config, dict):
         raise ValueError("Tour configuration must be a YAML mapping.")
+
+    navigation_enabled = config.get("navigation_enabled", False)
+
+    if not isinstance(navigation_enabled, bool):
+        raise ValueError(
+            "navigation_enabled must be true or false."
+        )
 
     stops = config.get("tour_stops")
 
@@ -61,11 +68,12 @@ def load_tour_stops():
 
         tour_stops[name] = tuple(float(value) for value in coordinates)
 
-    return tour_stops
+    return tour_stops, navigation_enabled
 
 
 # Loaded once at startup.
 TOUR_STOPS = None
+NAVIGATION_ENABLED = False
 
 
 class TourGuide(Node):
@@ -91,6 +99,13 @@ class TourGuide(Node):
             print(f"{index}. {name}: x={x}, y={y}, yaw={yaw}")
 
     def start_navigation(self, stop_names, full_tour=False):
+        if not NAVIGATION_ENABLED:
+            self.get_logger().warn(
+                "Navigation is disabled in tour_stops.yaml. "
+                "Verify the map and tour-stop coordinates before enabling it."
+            )
+            return
+
         with self.lock:
             if self.busy:
                 print("Navigation is already active.")
@@ -298,12 +313,31 @@ class TourGuide(Node):
 
 
 def main(args=None):
-    global TOUR_STOPS
+    global TOUR_STOPS, NAVIGATION_ENABLED
 
-    TOUR_STOPS = load_tour_stops()
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="TurtleBot 4 Nav2 tour guide"
+    )
+    parser.add_argument(
+        "--mock",
+        action="store_true",
+        help="Use the mock-testing tour-stop configuration.",
+    )
+
+    options, ros_args = parser.parse_known_args(args)
+
+    config_filename = (
+        "tour_stops_mock.yaml"
+        if options.mock
+        else "tour_stops.yaml"
+    )
+
+    TOUR_STOPS, NAVIGATION_ENABLED = load_tour_stops(config_filename)
 
     rclpy.init(
-        args=args,
+        args=ros_args,
         signal_handler_options=SignalHandlerOptions.NO,
     )
     node = TourGuide()
